@@ -1,4 +1,4 @@
-#[cfg(any(all(windows, not(feature = "prefer-webpki")), target_vendor = "apple"))]
+#[cfg(target_vendor = "apple")]
 use std::sync::Arc;
 
 #[cfg(any(
@@ -7,7 +7,7 @@ use std::sync::Arc;
         not(target_os = "android"),
         not(target_vendor = "apple"),
     ),
-    all(windows, feature = "prefer-webpki"),
+    windows
 ))]
 mod others;
 
@@ -17,7 +17,7 @@ mod others;
         not(target_os = "android"),
         not(target_vendor = "apple"),
     ),
-    all(windows, feature = "prefer-webpki"),
+    windows
 ))]
 pub use others::Verifier;
 
@@ -33,16 +33,9 @@ pub(crate) mod android;
 #[cfg(target_os = "android")]
 pub use android::Verifier;
 
-#[cfg(all(windows, not(feature = "prefer-webpki")))]
-mod windows;
-
-#[cfg(all(windows, not(feature = "prefer-webpki")))]
-pub use windows::Verifier;
-
 /// An EKU was invalid for the use case of verifying a server certificate.
 ///
 /// This error is used primarily for tests.
-#[cfg_attr(windows, allow(dead_code))] // not used by windows verifier
 #[derive(Debug, PartialEq)]
 pub(crate) struct EkuError;
 
@@ -69,24 +62,12 @@ fn log_server_cert(_end_entity: &rustls::pki_types::CertificateDer<'_>) {
 
 // Unknown certificate error shorthand. Used when we need to construct an "Other" certificate
 // error with a platform specific error message.
-#[cfg(any(all(windows, not(feature = "prefer-webpki")), target_vendor = "apple"))]
+#[cfg(target_vendor = "apple")]
 fn invalid_certificate(reason: impl Into<String>) -> rustls::Error {
     rustls::Error::InvalidCertificate(rustls::CertificateError::Other(rustls::OtherError(
         Arc::from(Box::from(reason.into())),
     )))
 }
 
-/// List of EKUs that one or more of that *must* be in the end-entity certificate.
-///
-/// Legacy server-gated crypto OIDs are assumed to no longer be in use.
-///
-/// Currently supported:
-/// - id-kp-serverAuth
-// TODO: Chromium also allows for `OID_ANY_EKU` on Android.
-#[cfg(all(target_os = "windows", not(feature = "prefer-webpki")))]
-// XXX: Windows requires that we NUL terminate EKU strings.
-// See https://github.com/rustls/rustls-platform-verifier/issues/126#issuecomment-2306232794.
-const ALLOWED_EKUS: &[windows_sys::core::PCSTR] =
-    &[windows_sys::Win32::Security::Cryptography::szOID_PKIX_KP_SERVER_AUTH];
 #[cfg(target_os = "android")]
 pub const ALLOWED_EKUS: &[&str] = &["1.3.6.1.5.5.7.3.1"];

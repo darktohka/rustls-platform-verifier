@@ -16,8 +16,6 @@ name = "rustls_platform_verifier"
 # This feature is not stable, nor is the interface exported when it is enabled.
 # Do not rely on this or use it in production.
 ffi-testing = ["android_logger", "rustls/ring"]
-# Prefer WebPKI instead of OS level facilities
-prefer-webpki = []
 # Enables APIs that expose lower-level verifier types for debugging purposes.
 dbg = []
 # Enables `log::debug` base64-encoded logging of all end-entity certificates processed
@@ -58,9 +56,6 @@ core-foundation = "0.10"
 core-foundation-sys = "0.8"
 security-framework = "3.5.0"
 security-framework-sys = "2.15"
-
-[target.'cfg(windows)'.dependencies]
-windows-sys = { version = ">=0.52.0, <0.62.0", default-features = false, features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
 
 [dev-dependencies]
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
