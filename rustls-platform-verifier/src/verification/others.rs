@@ -82,15 +82,14 @@ impl Verifier {
             root_store.add(cert)?;
         }
 
-        #[cfg(any(
+        #[cfg(
             all(
                 unix,
                 not(target_os = "android"),
                 not(target_vendor = "apple"),
                 not(target_arch = "wasm32"),
-            ),
-            windows,
-        ))]
+            )
+        )]
         {
             let result = rustls_native_certs::load_native_certs();
             let (added, ignored) = root_store.add_parsable_certificates(result.certs);
@@ -118,6 +117,11 @@ impl Verifier {
             root_store.add_parsable_certificates(
                 webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned(),
             );
+        };
+
+        #[cfg(windows)]
+        {
+            root_store.add_parsable_certificates(webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().cloned());
         };
 
         Ok(Self {
