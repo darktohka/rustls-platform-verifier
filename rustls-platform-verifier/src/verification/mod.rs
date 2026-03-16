@@ -1,17 +1,23 @@
-#[cfg(any(windows, target_vendor = "apple"))]
+#[cfg(any(all(windows, not(feature = "prefer-webpki")), target_vendor = "apple"))]
 use std::sync::Arc;
 
-#[cfg(all(
-    any(unix, target_arch = "wasm32"),
-    not(target_os = "android"),
-    not(target_vendor = "apple"),
+#[cfg(any(
+    all(
+        any(unix, target_arch = "wasm32"),
+        not(target_os = "android"),
+        not(target_vendor = "apple"),
+    ),
+    all(windows, feature = "prefer-webpki"),
 ))]
 mod others;
 
-#[cfg(all(
-    any(unix, target_arch = "wasm32"),
-    not(target_os = "android"),
-    not(target_vendor = "apple"),
+#[cfg(any(
+    all(
+        any(unix, target_arch = "wasm32"),
+        not(target_os = "android"),
+        not(target_vendor = "apple"),
+    ),
+    all(windows, feature = "prefer-webpki"),
 ))]
 pub use others::Verifier;
 
@@ -27,10 +33,10 @@ pub(crate) mod android;
 #[cfg(target_os = "android")]
 pub use android::Verifier;
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "prefer-webpki")))]
 mod windows;
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "prefer-webpki")))]
 pub use windows::Verifier;
 
 /// An EKU was invalid for the use case of verifying a server certificate.
@@ -63,7 +69,7 @@ fn log_server_cert(_end_entity: &rustls::pki_types::CertificateDer<'_>) {
 
 // Unknown certificate error shorthand. Used when we need to construct an "Other" certificate
 // error with a platform specific error message.
-#[cfg(any(windows, target_vendor = "apple"))]
+#[cfg(any(all(windows, not(feature = "prefer-webpki")), target_vendor = "apple"))]
 fn invalid_certificate(reason: impl Into<String>) -> rustls::Error {
     rustls::Error::InvalidCertificate(rustls::CertificateError::Other(rustls::OtherError(
         Arc::from(Box::from(reason.into())),
@@ -77,7 +83,7 @@ fn invalid_certificate(reason: impl Into<String>) -> rustls::Error {
 /// Currently supported:
 /// - id-kp-serverAuth
 // TODO: Chromium also allows for `OID_ANY_EKU` on Android.
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(feature = "prefer-webpki")))]
 // XXX: Windows requires that we NUL terminate EKU strings.
 // See https://github.com/rustls/rustls-platform-verifier/issues/126#issuecomment-2306232794.
 const ALLOWED_EKUS: &[windows_sys::core::PCSTR] =

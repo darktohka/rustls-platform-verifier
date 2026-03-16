@@ -82,11 +82,14 @@ impl Verifier {
             root_store.add(cert)?;
         }
 
-        #[cfg(all(
-            unix,
-            not(target_os = "android"),
-            not(target_vendor = "apple"),
-            not(target_arch = "wasm32"),
+        #[cfg(any(
+            all(
+                unix,
+                not(target_os = "android"),
+                not(target_vendor = "apple"),
+                not(target_arch = "wasm32"),
+            ),
+            windows,
         ))]
         {
             let result = rustls_native_certs::load_native_certs();
